@@ -1,8 +1,8 @@
-package tigrbank.service;
+package service;
 
-import tigrbank.domain.Category;
-import tigrbank.repository.CategoryRepository;
-import tigrbank.repository.inmemory.InMemoryCategoryRepository;
+import domain.Category;
+import repository.CategoryRepository;
+import repository.inmemory.InMemoryCategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

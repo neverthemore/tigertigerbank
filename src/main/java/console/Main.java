@@ -108,7 +108,7 @@ public class Main {
                         System.out.println("Категория создана: " + category.getId() + ", " + category.getType() + ", " + category.getName());
                         break;
 
-                    case 3:
+                    case 3: {
                         System.out.print("Тип операции (INCOME/EXPENSE): ");
                         String opTypeStr = scanner.nextLine().toUpperCase();
                         Category.Type opType = Category.Type.valueOf(opTypeStr);
@@ -128,6 +128,7 @@ public class Main {
                         Operation op = operationService.createOperation(opType, accId, amount, date, desc, catId);
                         System.out.println("Операция создана: " + op.getId());
                         break;
+                    }
 
                     case 4:
                         List<BankAccount> accounts = accountService.getAllAccounts();
