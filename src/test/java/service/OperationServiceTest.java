@@ -3,12 +3,9 @@ package service;
 import domain.BankAccount;
 import domain.Category;
 import domain.Operation;
-import repository.AccountRepository;
-import repository.CategoryRepository;
-import repository.OperationRepository;
-import repository.inmemory.InMemoryAccountRepository;
-import repository.inmemory.InMemoryCategoryRepository;
-import repository.inmemory.InMemoryOperationRepository;
+import factory.*;
+import repository.*;
+import repository.inmemory.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +14,15 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 class OperationServiceTest {
+
     private OperationService operationService;
     private AccountRepository accountRepository;
     private CategoryRepository categoryRepository;
     private OperationRepository operationRepository;
+    private BankAccountFactory accountFactory;
+    private CategoryFactory categoryFactory;
+    private OperationFactory operationFactory;
+
     private BankAccount testAccount;
     private Category incomeCategory;
     private Category expenseCategory;
@@ -30,11 +32,21 @@ class OperationServiceTest {
         accountRepository = new InMemoryAccountRepository();
         categoryRepository = new InMemoryCategoryRepository();
         operationRepository = new InMemoryOperationRepository();
-        operationService = new OperationService(operationRepository, accountRepository, categoryRepository);
 
-        testAccount = accountRepository.save(new BankAccount("Test", 1000));
-        incomeCategory = categoryRepository.save(new Category(Category.Type.INCOME, "Зарплата"));
-        expenseCategory = categoryRepository.save(new Category(Category.Type.EXPENSE, "Еда"));
+        accountFactory = new DefaultBankAccountFactory();
+        categoryFactory = new DefaultCategoryFactory();
+        operationFactory = new DefaultOperationFactory();
+
+        operationService = new OperationService(
+                operationRepository,
+                accountRepository,
+                categoryRepository,
+                operationFactory
+        );
+
+        testAccount = accountRepository.save(accountFactory.create("Test", 1000));
+        incomeCategory = categoryRepository.save(categoryFactory.create(Category.Type.INCOME, "Salary"));
+        expenseCategory = categoryRepository.save(categoryFactory.create(Category.Type.EXPENSE, "Food"));
     }
 
     @Test
@@ -44,7 +56,7 @@ class OperationServiceTest {
                 testAccount.getId(),
                 500,
                 LocalDate.now(),
-                "Месячная зарплат",
+                "Monthly salary",
                 incomeCategory.getId()
         );
 
@@ -60,7 +72,7 @@ class OperationServiceTest {
                 testAccount.getId(),
                 200,
                 LocalDate.now(),
-                "Бакалея",
+                "Groceries",
                 expenseCategory.getId()
         );
 
@@ -76,7 +88,7 @@ class OperationServiceTest {
                         testAccount.getId(),
                         -100,
                         LocalDate.now(),
-                        "недействительно",
+                        "Invalid",
                         incomeCategory.getId()
                 )
         );
@@ -87,7 +99,7 @@ class OperationServiceTest {
         assertThrows(IllegalArgumentException.class, () ->
                 operationService.createOperation(
                         Category.Type.INCOME,
-                        "неправильный id",
+                        "wrong-id",
                         100,
                         LocalDate.now(),
                         "Test",
@@ -105,7 +117,7 @@ class OperationServiceTest {
                         100,
                         LocalDate.now(),
                         "Test",
-                        "неправильный кот"
+                        "wrong-cat"
                 )
         );
     }
@@ -114,7 +126,7 @@ class OperationServiceTest {
     void createOperation_CategoryTypeMismatch_Throws() {
         assertThrows(IllegalArgumentException.class, () ->
                 operationService.createOperation(
-                        Category.Type.EXPENSE, // expense operation with income category
+                        Category.Type.EXPENSE,
                         testAccount.getId(),
                         100,
                         LocalDate.now(),
@@ -137,7 +149,7 @@ class OperationServiceTest {
         double balanceAfterCreation = accountRepository.findById(testAccount.getId()).get().getBalance(); // 800
 
         operationService.deleteOperation(op.getId());
-        double balanceAfterDeletion = accountRepository.findById(testAccount.getId()).get().getBalance(); // should be 1000
+        double balanceAfterDeletion = accountRepository.findById(testAccount.getId()).get().getBalance(); // 1000
 
         assertEquals(1000, balanceAfterDeletion);
         assertFalse(operationRepository.findById(op.getId()).isPresent());
@@ -155,5 +167,33 @@ class OperationServiceTest {
         );
         Operation found = operationService.getOperation(saved.getId());
         assertEquals(saved.getId(), found.getId());
+    }
+
+    @Test
+    void recalcBalance_WhenMismatch_ShouldCorrect() {
+        operationService.createOperation(
+                Category.Type.INCOME,
+                testAccount.getId(),
+                500,
+                LocalDate.now(),
+                "Salary",
+                incomeCategory.getId()
+        );
+        operationService.createOperation(
+                Category.Type.EXPENSE,
+                testAccount.getId(),
+                200,
+                LocalDate.now(),
+                "Food",
+                expenseCategory.getId()
+        );
+
+        BankAccount account = accountRepository.findById(testAccount.getId()).get();
+        account.setBalance(9999);
+        accountRepository.save(account);
+
+        operationService.recalcBalance(testAccount.getId());
+
+        assertEquals(1300, accountRepository.findById(testAccount.getId()).get().getBalance());
     }
 }

@@ -1,7 +1,6 @@
 package domain;
 
 import java.util.Objects;
-import java.util.UUID;
 
 public class Category {
     public enum Type { INCOME, EXPENSE }
@@ -9,12 +8,6 @@ public class Category {
     private final String id;
     private final Type type;
     private String name;
-
-    public Category(Type type, String name) {
-        this.id = UUID.randomUUID().toString();
-        this.type = type;
-        this.name = name;
-    }
 
     public Category(String id, Type type, String name) {
         this.id = id;
@@ -36,7 +29,5 @@ public class Category {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(id); }
 }
