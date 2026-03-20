@@ -1,18 +1,17 @@
-package io.csv;
+package exporter;
 
 import domain.Operation;
-import io.DataExporter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-public class CSVOperationExporter implements DataExporter<Operation> {
+public class CsvExporter implements DataExporter {
     @Override
-    public void export(List<Operation> data, String filePath) throws IOException {
+    public void export(List<Operation> operations, String filePath) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
             writer.println("id,type,bankAccountId,amount,date,description,categoryId");
-            for (Operation op : data) {
+            for (Operation op : operations) {
                 writer.printf("%s,%s,%s,%.2f,%s,%s,%s%n",
                         op.getId(),
                         op.getType(),

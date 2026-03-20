@@ -3,6 +3,7 @@ package service;
 import domain.BankAccount;
 import domain.Category;
 import domain.Operation;
+import factory.OperationFactory;
 import repository.AccountRepository;
 import repository.CategoryRepository;
 import repository.OperationRepository;
@@ -13,33 +14,30 @@ public class OperationService {
     private final OperationRepository operationRepository;
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
+    private final OperationFactory operationFactory;
 
     public OperationService(OperationRepository operationRepository,
                             AccountRepository accountRepository,
-                            CategoryRepository categoryRepository) {
+                            CategoryRepository categoryRepository,
+                            OperationFactory operationFactory) {
         this.operationRepository = operationRepository;
         this.accountRepository = accountRepository;
         this.categoryRepository = categoryRepository;
+        this.operationFactory = operationFactory;
     }
 
     public Operation createOperation(Category.Type type, String bankAccountId, double amount,
                                      LocalDate date, String description, String categoryId) {
-        // Валидация
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Сумма должна быть положительной");
-        }
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
         BankAccount account = accountRepository.findById(bankAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Банковский счет не найден"));
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Категория не найдена"));
-        if (category.getType() != type) {
-            throw new IllegalArgumentException("Тип категории не соответствует типу операции");
-        }
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+        if (category.getType() != type) throw new IllegalArgumentException("Category type mismatch");
 
-        Operation operation = new Operation(type, bankAccountId, amount, date, description, categoryId);
+        Operation operation = operationFactory.create(type, bankAccountId, amount, date, description, categoryId);
         operationRepository.save(operation);
 
-        // Обновление баланса счета
         if (type == Category.Type.INCOME) {
             account.deposit(amount);
         } else {
@@ -52,7 +50,7 @@ public class OperationService {
 
     public Operation getOperation(String id) {
         return operationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Операция не найдена с идентификатором: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Operation not found"));
     }
 
     public List<Operation> getAllOperations() {
@@ -61,15 +59,29 @@ public class OperationService {
 
     public void deleteOperation(String id) {
         Operation operation = getOperation(id);
-        // Откат влияния на баланс (для целостности)
         BankAccount account = accountRepository.findById(operation.getBankAccountId())
-                .orElseThrow(() -> new IllegalStateException("Связанная учетная запись не найдена"));
+                .orElseThrow(() -> new IllegalStateException("Account not found"));
+
         if (operation.getType() == Category.Type.INCOME) {
-            account.withdraw(operation.getAmount()); // обратная операция
+            account.withdraw(operation.getAmount());
         } else {
             account.deposit(operation.getAmount());
         }
         accountRepository.save(account);
         operationRepository.delete(id);
+    }
+
+    public void recalcBalance(String accountId) {
+        BankAccount account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        double net = operationRepository.findAll().stream()
+                .filter(op -> op.getBankAccountId().equals(accountId))
+                .mapToDouble(op -> op.getType() == Category.Type.INCOME ? op.getAmount() : -op.getAmount())
+                .sum();
+        double correctBalance = account.getInitialBalance() + net; // начальный баланс + нетто-изменения
+        if (Math.abs(account.getBalance() - correctBalance) > 0.001) {
+            account.setBalance(correctBalance);
+            accountRepository.save(account);
+        }
     }
 }

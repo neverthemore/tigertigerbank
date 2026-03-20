@@ -1,27 +1,28 @@
 package service;
 
 import domain.BankAccount;
+import factory.BankAccountFactory;
 import repository.AccountRepository;
 import java.util.List;
 
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final BankAccountFactory accountFactory;
 
-    public AccountService(AccountRepository accountRepository) {
+    public AccountService(AccountRepository accountRepository, BankAccountFactory accountFactory) {
         this.accountRepository = accountRepository;
+        this.accountFactory = accountFactory;
     }
 
     public BankAccount createAccount(String name, double initialBalance) {
-        if (initialBalance < 0) {
-            throw new IllegalArgumentException("Начальный баланс не может быть отрицательным");
-        }
-        BankAccount account = new BankAccount(name, initialBalance);
+        if (initialBalance < 0) throw new IllegalArgumentException("Balance cannot be negative");
+        BankAccount account = accountFactory.create(name, initialBalance);
         return accountRepository.save(account);
     }
 
     public BankAccount getAccount(String id) {
         return accountRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Учетная запись с идентификатором не найдена: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
     }
 
     public List<BankAccount> getAllAccounts() {
@@ -35,9 +36,6 @@ public class AccountService {
     }
 
     public void deleteAccount(String id) {
-        if (!accountRepository.exists(id)) {
-            throw new IllegalArgumentException("Учетная запись с идентификатором не найдена: " + id);
-        }
         accountRepository.delete(id);
     }
 

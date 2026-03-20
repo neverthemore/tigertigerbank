@@ -1,27 +1,28 @@
 package service;
 
 import domain.Category;
+import factory.CategoryFactory;
 import repository.CategoryRepository;
 import java.util.List;
 
 public class CategoryService {
     private final CategoryRepository categoryRepository;
+    private final CategoryFactory categoryFactory;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, CategoryFactory categoryFactory) {
         this.categoryRepository = categoryRepository;
+        this.categoryFactory = categoryFactory;
     }
 
     public Category createCategory(Category.Type type, String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Название категории не может быть пустым");
-        }
-        Category category = new Category(type, name);
+        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("Name cannot be empty");
+        Category category = categoryFactory.create(type, name);
         return categoryRepository.save(category);
     }
 
     public Category getCategory(String id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Категория с идентификатором не найдена: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
     }
 
     public List<Category> getAllCategories() {
@@ -35,9 +36,6 @@ public class CategoryService {
     }
 
     public void deleteCategory(String id) {
-        if (!categoryRepository.exists(id)) {
-            throw new IllegalArgumentException("Категория с идентификатором не найдена: " + id);
-        }
         categoryRepository.delete(id);
     }
 }

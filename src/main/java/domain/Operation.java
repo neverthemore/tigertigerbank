@@ -2,7 +2,6 @@ package domain;
 
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.UUID;
 
 public class Operation {
     private final String id;
@@ -12,17 +11,6 @@ public class Operation {
     private final LocalDate date;
     private final String description;
     private final String categoryId;
-
-    public Operation(Category.Type type, String bankAccountId, double amount, LocalDate date,
-                     String description, String categoryId) {
-        this.id = UUID.randomUUID().toString();
-        this.type = type;
-        this.bankAccountId = bankAccountId;
-        this.amount = amount;
-        this.date = date;
-        this.description = description;
-        this.categoryId = categoryId;
-    }
 
     public Operation(String id, Category.Type type, String bankAccountId, double amount,
                      LocalDate date, String description, String categoryId) {
@@ -52,7 +40,5 @@ public class Operation {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(id); }
 }

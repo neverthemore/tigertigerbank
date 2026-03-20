@@ -1,40 +1,35 @@
 package domain;
 
 import java.util.Objects;
-import java.util.UUID;
 
 public class BankAccount {
     private final String id;
     private String name;
     private double balance;
-
-    public BankAccount(String name, double balance) {
-        this.id = UUID.randomUUID().toString();
-        this.name = name;
-        this.balance = balance;
-    }
+    private final double initialBalance;  // сохраняем начальный баланс
 
     public BankAccount(String id, String name, double balance) {
         this.id = id;
         this.name = name;
         this.balance = balance;
+        this.initialBalance = balance;    // фиксируем при создании
     }
 
     public String getId() { return id; }
     public String getName() { return name; }
-    public double getBalance() { return balance; }
-
     public void setName(String name) { this.name = name; }
+    public double getBalance() { return balance; }
     public void setBalance(double balance) { this.balance = balance; }
+    public double getInitialBalance() { return initialBalance; }
 
     public void deposit(double amount) {
-        if (amount <= 0) throw new IllegalArgumentException("Сумма должна быть положительной");
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
         balance += amount;
     }
 
     public void withdraw(double amount) {
-        if (amount <= 0) throw new IllegalArgumentException("Сумма должна быть положительной");
-        if (balance < amount) throw new IllegalStateException("Недостаточно средств");
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+        if (balance < amount) throw new IllegalStateException("Insufficient funds");
         balance -= amount;
     }
 
@@ -47,7 +42,5 @@ public class BankAccount {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(id); }
 }

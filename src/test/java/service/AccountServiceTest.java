@@ -1,6 +1,8 @@
 package service;
 
 import domain.BankAccount;
+import factory.BankAccountFactory;
+import factory.DefaultBankAccountFactory;
 import repository.AccountRepository;
 import repository.inmemory.InMemoryAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,13 +13,16 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AccountServiceTest {
+
     private AccountService accountService;
     private AccountRepository accountRepository;
+    private BankAccountFactory accountFactory;
 
     @BeforeEach
     void setUp() {
         accountRepository = new InMemoryAccountRepository();
-        accountService = new AccountService(accountRepository);
+        accountFactory = new DefaultBankAccountFactory();
+        accountService = new AccountService(accountRepository, accountFactory);
     }
 
     @Test

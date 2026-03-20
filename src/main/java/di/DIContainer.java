@@ -4,9 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
-  Простой DI-контейнер с поддержкой синглтонов и фабрик.
- */
 public class DIContainer {
     private final Map<Class<?>, Supplier<?>> suppliers = new HashMap<>();
     private final Map<Class<?>, Object> singletons = new HashMap<>();
@@ -26,9 +23,8 @@ public class DIContainer {
         }
         Supplier<?> supplier = suppliers.get(type);
         if (supplier == null) {
-            throw new IllegalArgumentException("нет зарегестрированного поставщика для: " + type.getName());
+            throw new IllegalArgumentException("No registered supplier for " + type.getName());
         }
-        T instance = (T) supplier.get();
-        return instance;
+        return (T) supplier.get();
     }
 }

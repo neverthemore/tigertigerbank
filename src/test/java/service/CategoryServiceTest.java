@@ -1,6 +1,8 @@
 package service;
 
 import domain.Category;
+import factory.CategoryFactory;
+import factory.DefaultCategoryFactory;
 import repository.CategoryRepository;
 import repository.inmemory.InMemoryCategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,13 +13,16 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CategoryServiceTest {
+
     private CategoryService categoryService;
     private CategoryRepository categoryRepository;
+    private CategoryFactory categoryFactory;
 
     @BeforeEach
     void setUp() {
         categoryRepository = new InMemoryCategoryRepository();
-        categoryService = new CategoryService(categoryRepository);
+        categoryFactory = new DefaultCategoryFactory();
+        categoryService = new CategoryService(categoryRepository, categoryFactory);
     }
 
     @Test
